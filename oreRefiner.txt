@@ -1,7 +1,9 @@
 #------ oreRefiner Macro by Isora/kw4k ------#
 # github: https://github.com/kw4k/openkore-macros
 #
-#    Ore Refining macro based on Openkore's example macro.
+#    Ore Refining macro based on Openkore's example macro. 
+#    https://openkore.com/wiki/macro_plugin#Collected_Macros
+#
 # DESCRIPTION:
 #   Takes Rough Oridecon/Elunium from your storage and refine them
 #   into Oridecon/Elunium

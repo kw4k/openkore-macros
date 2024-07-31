@@ -1,0 +1,102 @@
+#-------------------- Simple Refiner by Isora/kw4k --------------------#
+# github: https://github.com/kw4k/openkore-macros
+#
+# Refines all <EquipmentName> in inventory. Position your char inside
+# Prontera Refinery
+# Just copy this macro block in your macros.txt
+# or add !include refineEquip.txt in your macros.txt
+#
+# USAGE: macro refineEquip -- <EquipmentName> <EquipmentType> <RefineAmount>
+#
+# EXAMPLE:
+#	macro refineEquip -- "Orcish Axe" Weapon3 7
+#	- This will refine all Orcish Axes in your inventory up to +7
+#
+#	macro refineEquip -- "+7 Orcish Axe" Weapon3 1
+#	- This will refine all +7 Orcish Axes in your inventory to +8
+#
+#	macro refineEquip -- "Orcish Axe" Weapon3
+#	- This will refine all Orcish Axes in your inventory to the safe limit
+#
+# EquipmentName - The equipment you want to refine. Case sensitive.Enclose
+#   in Double quotes for equipments with space and slot.
+#
+# EquipmentType - The type of equipment you are refining. 
+#   Weapon1 = For weapons that will be refined by Phracon.
+#   Weapon2 = For weapons that will be refined by Emveretarcon.
+#   Weapon3 = For Level 3 weapons that will be refined by Oridecon
+#   Weapon4 = For Level 4 weapons that will be refined by Oridecon
+#   Armor = For armors that will be refined by Elunium
+#
+# RefineAmount - up to 10. Never tried beyond 10.
+#
+#	TODO:
+#		- Add option for catalyst
+#		- Automate refining by taking items from storage and
+#			taking the right amount of ores
+#		- Add optional logging
+#
+# NOTE: This refiner macro is based on refineui refining.
+#   This won't work on the old style refining where you need to equip
+#   your item first before refining.
+#
+#	You can add -exclusive to make sure this macro is not interrupted by other
+#	macro calls.
+#
+#---------------------------------------------------------------------#
+
+macro refineEquip {
+    $equipName = $.param1
+    $equipmentType = $.param2
+    $matID = refineStone("$equipmentType", "id")
+    $itemName = refineStone("$equipmentType", "item")
+    $itemLimit = refineStone("$equipmentType", "limit")
+    $refineAmount = $.param3
+    if ($refineAmount == None) {
+        $refineAmount = $itemLimit
+    }
+    if (@invamount($itemName) < $refineAmount) gotomissingRefineItem
+    log $equipName uses $itemName ($matID) and has refine limit of $itemLimit
+    if (@inventory($itemName) == -1) goto endRefine
+    log You have @invamount($equipName) in inventory. Starting to refine $equipName $refineAmount times.
+    do talknpc 63 60
+    $refineThis = @eval(@inventory($equipName))
+    do refineui select $refineThis
+    $counter = 0
+    while ($counter < $refineAmount) as loop
+        log Refine attempt @eval($counter + 1) of $refineAmount
+        do refineui refine $refineThis $matID
+        $counter++
+        pause 0.5
+    end loop
+    do refineui cancel
+    if (@inventory($equipName) != -1) {
+        log Continue refining @invamount($equipName) $equipName
+        call refineEquip -- "$equipName" $equipmentType $refineAmount
+    }
+    log End of refining. Ending macro.
+    stop
+    :endRefine
+    log Missing items.
+    stop
+    :missingRefineItem
+    log Not enough $itemName to refine $item
+    stop
+}
+
+sub refineStone {
+    my ($equipmentType, $args) = @_;
+    my @refineStones = (
+        {item => "Phracon", type => "Weapon1", id => 1010, limit => 7},
+        {item => "Emveretarcon", type => "Weapon2", id => 1011, limit => 6},
+        {item => "Oridecon", type => "Weapon3", id => 984, limit => 5},
+        {item => "Oridecon", type => "Weapon4", id => 984, limit => 4},
+        {item => "Elunium", type => "Armor", id => 985, limit => 4},
+    );
+
+    foreach my $stone (@refineStones) {
+        if ($stone->{type} eq $equipmentType) {
+            return $stone->{$args};
+        }
+    }
+}

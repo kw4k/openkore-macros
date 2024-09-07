@@ -1,0 +1,84 @@
+# Equip Slot Macro v2 by Isora/kw4k
+# https://github.com/kw4k/openkore-macros
+# Reference: https://ratemyserver.net/socket_enchant.php
+#
+#
+#
+# USAGE:
+#   macro slotEquip -- "WeaponName"
+# EXAMPLE:
+#   macro slotEquip -- "Orcish Axe"
+
+macro slotEquip {
+    $equipName = $.param1
+    log ========== slotEquip Macro Start ==========
+    log Checking inventory for $equipName @inventory($equipName)
+    if (@inventory($equipName) == -1) goto noEquip
+    $equipOutput = equipList("$equipName", "outputWeapon")
+    $itemReqString = equipList("$equipName", "itemReq")
+    if (@arg ("$itemReqString", 1) != "") {
+        $itemReq1 = @arg ("$itemReqString", 1)
+        $itemReqAmount1 = @arg ("$itemReqString", 2)
+        log Checking inventory for required items (1)
+        if (@inventory($itemReq1) != -1) {
+            if (@invamount($itemReq1) >= $itemReqAmount1) {
+                log You have the required $itemReqAmount1 $itemReq1
+            }
+        } else {
+            goto noReqItems
+        }
+    }
+    if (@arg ("$itemReqString", 3) != "") {
+        $itemReq2 = @arg ("$itemReqString", 3)
+        $itemReqAmount2 = @arg ("$itemReqString", 4)
+        log Checking inventory for required items (2)
+        if (@inventory($itemReq2) != -1) {
+            if (@invamount($itemReq2) >= $itemReqAmount2) {
+                log You have the required $itemReqAmount2 $itemReq2
+            }
+        } else {
+            goto noReqItems
+        }
+    }
+    $zenyRequired = equipList("$equipName", "zenyReq")
+    if ($.zeny < $zenyRequired) goto noZeny
+    $slotNPC = equipList("$equipName", "NPC")
+    $talkSequence = equipList("$equipName", "sequence")
+    log Checks done. Starting to slot $equipName
+    do talknpc $slotNPC $talkSequence
+    pause 1
+    if (@inventory($equipOutput) != -1) {
+        log Slotting success! Storing item to cart.
+        do cart add $equipOutput
+        $i = 1
+    }
+    log Done. Repeat slotting equips.
+    call slotEquip -- "$equipName"
+    :noEquip
+    log You don't have $equipName
+    call slotEquipLog -- "$equipName"
+    stop
+    :noReqItems
+    log You don't have ($itemReq1) | ($itemReq2)
+    stop
+    :noZeny
+    log You don't have zeny.
+    stop
+}
+
+
+sub equipList {
+    my ($equipment, $args) = @_;
+    my @equipmentList = (
+        {class => "B", originalWeapon => "Gakkung [1]", outputWeapon => "Gakkung [2]", itemReq => "Oridecon, 2, Steel, 5",  zenyReq => 300000, NPC => "33 70", sequence => "c r0 c r1 c r2 c r0 n"},
+        {class => "B", originalWeapon => "Orcish Axe", outputWeapon => "Orcish Axe [4]", itemReq => "Oridecon, 1", zenyReq => 200000, NPC => "22 60", sequence => "c r0 c r1 c r0 c r0 n"},
+        {class => "S", originalWeapon => "Undershirt", outputWeapon => "Undershirt [1]", itemReq => "Elunium, 1", zenyReq => 1000000, NPC => "22 60", sequence => "c r1 c r3 c r3 c r0 n"},
+        {class => "S", originalWeapon => "Pantie", outputWeapon => "Pantie [1]", itemReq => "Elunium, 1", zenyReq => 1000000, NPC => "22 60", sequence => "c r1 c r3 c r4 c r0 n"},
+    );
+
+    foreach my $weapon (@equipmentList) {
+        if ($weapon->{originalWeapon} eq $equipment) {
+            return $weapon->{$args};
+        }
+    }
+}

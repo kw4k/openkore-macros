@@ -12,6 +12,7 @@
 #   macro slotEquip -- "Gakkung [1]"
 #
 # NOTES:
+#   - This macro assumes the character has a cart.
 #   - Equipment name is case sensitive.
 #   - Replace the value of $storage and $storageSequence to match yours.
 #

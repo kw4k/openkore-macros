@@ -1,15 +1,30 @@
-# Equip Slot Macro v2 by Isora/kw4k
+# Equipment Slot Echant Macro by Isora/kw4k
 # https://github.com/kw4k/openkore-macros
-# Reference: https://ratemyserver.net/socket_enchant.php
+# https://ratemyserver.net/socket_enchant.php
 #
-#
+# DESCRIPTION:
+#   Macro for Equipment slot enchanter NPC
 #
 # USAGE:
-#   macro slotEquip -- "WeaponName"
+#   macro slotEquip -- "EquipName"
+# 
 # EXAMPLE:
-#   macro slotEquip -- "Orcish Axe"
+#   macro slotEquip -- "Gakkung [1]"
+#
+# NOTES:
+#   - Equipment name is case sensitive.
+#   - Replace the value of $storage and $storageSequence to match yours.
+#
+# changelog:
+#   -added some items
+#   -added auto get items from storage
+#   -removed experimental logging to check success rate
+#   -reworked entire macro sequence
+#     
 
 macro slotEquip {
+    $storage = prontera 147 171
+    $storageSequence = 147 171 r0 n
     $equipName = $.param1
     log ========== slotEquip Macro Start ==========
     log Checking inventory for $equipName @inventory($equipName)
@@ -25,7 +40,10 @@ macro slotEquip {
                 log You have the required $itemReqAmount1 $itemReq1
             }
         } else {
-            goto noReqItems
+            do move $storage
+            do talknpc $storageSequence
+            do storage get $itemReq1 @eval($itemReqAmount1 * @invamount ($equipName))
+            do storage close
         }
     }
     if (@arg ("$itemReqString", 3) != "") {
@@ -37,27 +55,29 @@ macro slotEquip {
                 log You have the required $itemReqAmount2 $itemReq2
             }
         } else {
-            goto noReqItems
+            do move $storage
+            do talknpc $storageSequence
+            do storage get $itemReq2 @eval($itemReqAmount2 * @invamount ($equipName))
+            do storage close
         }
     }
     $zenyRequired = equipList("$equipName", "zenyReq")
     if ($.zeny < $zenyRequired) goto noZeny
     $slotNPC = equipList("$equipName", "NPC")
     $talkSequence = equipList("$equipName", "sequence")
-    log Checks done. Starting to slot $equipName
+    log Checks done. Moving to location
+    do move prt_in 30 65
+    pause 0.5
     do talknpc $slotNPC $talkSequence
-    pause 1
     if (@inventory($equipOutput) != -1) {
         log Slotting success! Storing item to cart.
         do cart add $equipOutput
         $i = 1
     }
     log Done. Repeat slotting equips.
-    call slotEquip -- "$equipName"
+    call slotEquip -- "$equipName" @eval($try + 1) @eval($success + $i)
     :noEquip
     log You don't have $equipName
-    call slotEquipLog -- "$equipName"
-    stop
     :noReqItems
     log You don't have ($itemReq1) | ($itemReq2)
     stop
@@ -66,12 +86,15 @@ macro slotEquip {
     stop
 }
 
-
+# Add your equipment here. Pretty much self explanatory.
 sub equipList {
     my ($equipment, $args) = @_;
     my @equipmentList = (
         {class => "B", originalWeapon => "Gakkung [1]", outputWeapon => "Gakkung [2]", itemReq => "Oridecon, 2, Steel, 5",  zenyReq => 300000, NPC => "33 70", sequence => "c r0 c r1 c r2 c r0 n"},
         {class => "B", originalWeapon => "Orcish Axe", outputWeapon => "Orcish Axe [4]", itemReq => "Oridecon, 1", zenyReq => 200000, NPC => "22 60", sequence => "c r0 c r1 c r0 c r0 n"},
+        {class => "A", originalWeapon => "Stunner", outputWeapon => "Stunner [2]", itemReq => "Oridecon, 2, Steel, 10",  zenyReq => 500000, NPC => "33 70", sequence => "c r0 c r2 c r6 c r0 n"},
+        {class => "A", originalWeapon => "Katar of Dusty Thornbush", outputWeapon => "Katar of Dusty Thornbush [3]", itemReq => "Oridecon, 2",  zenyReq => 500000, NPC => "22 60", sequence => "c r0 c r2 c r1 c r0 n"},
+        {class => "A", originalWeapon => "Katar of Raging Blaze", outputWeapon => "Katar of Raging Blaze [3]", itemReq => "Oridecon, 2",  zenyReq => 500000, NPC => "22 60", sequence => "c r0 c r2 c r2 c r0 n"},
         {class => "S", originalWeapon => "Undershirt", outputWeapon => "Undershirt [1]", itemReq => "Elunium, 1", zenyReq => 1000000, NPC => "22 60", sequence => "c r1 c r3 c r3 c r0 n"},
         {class => "S", originalWeapon => "Pantie", outputWeapon => "Pantie [1]", itemReq => "Elunium, 1", zenyReq => 1000000, NPC => "22 60", sequence => "c r1 c r3 c r4 c r0 n"},
     );

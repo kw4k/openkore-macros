@@ -1,9 +1,7 @@
 #------ oreRefiner Macro by Isora/kw4k ------#
 # github: https://github.com/kw4k/openkore-macros
 #
-#    Ore Refining macro based on Openkore's example macro. 
-#    https://openkore.com/wiki/macro_plugin#Collected_Macros
-#
+#    Ore Refining macro based on Openkore's example macro.
 # DESCRIPTION:
 #   Takes Rough Oridecon/Elunium from your storage and refine them
 #   into Oridecon/Elunium
@@ -14,11 +12,12 @@
 #   
 #   2. Add this oreRefine block to your config file
 #       oreRefine <boolean>
-#       oreRefineStorage_npc <npc coordinates and talk sequence>
+#       oreRefine_storage <npc coordinates and talk sequence>
 #
 # EXAMPLE:
 #       oreRefine 1
-#       oreRefineStorage_npc 141 171 r0 n
+#       oreRefine_storage 141 171 r0 n
+#       oreRefine_saveMap
 #
 # NOTES:
 #   - Disables sellAuto, storageAuto in your config by setting it to 0.
@@ -35,7 +34,8 @@ automacro oreRefiner {
             log Confirmed. Starting macro!
             do conf sellAuto 0
             do conf storageAuto 0
-            do conf lockMap ""
+            do conf oreRefine_saveMap @config(lockMap)
+            do conf lockMap None
             do conf teleportAuto_idle 0
             call oreRefineStart -exclusive
         } else {
@@ -46,15 +46,14 @@ automacro oreRefiner {
 
 macro oreRefineStart {
     log checking Storage...
-    do move prontera @eval(155 + @rand(0,3)) @eval(170 + @rand(0,3))
-    $storage = @config(oreRefineStorage_npc)
+    do move prontera @eval(155 + @rand(-3,3)) @eval(170 + @rand(-3,3))
+    $storage = @config(oreRefine_storage)
     $canCarry = @eval(int(((0.9 * $.maxweight) - $.weight)/20))
     do talknpc $storage
     if (@storamount(Rough Oridecon) > 4) {
         if (@storamount(Oridecon) < 30000) {
             log Let's make Oridecons!
             do storage get @storage(Rough Oridecon) $canCarry
-            pause 1
             do storage close
             call makeOres -exclusive
         }
@@ -62,30 +61,29 @@ macro oreRefineStart {
         if (@storamount(Elunium) < 30000) {
             log Let's make Eluniums!
             do storage get @storage(Rough Elunium) $canCarry
-            pause 1
             do storage close
             call makeOres -exclusive
         }
     } else {
-        log Nothing to make...
+        log End of ore refining
+        call endOreRefine
     }
 }
 
 macro makeOres {
     log Going to Dietrich
     do move prt_in 60 71
-    pause 1
     log Checking what to make...
     if (@invamount (Rough Oridecon) > 4) call refineOri
     if (@invamount (Rough Elunium) > 4) call refineElu
     log Time to store refined ores!
     do autostorage
-    pause 1
     call oreRefineStart -exclusive
 }
 
 
 macro refineOri {
+    set macro_delay 0.7
     $ori = @invamount (Rough Oridecon) R. Oris
     log Refining $ori
     while (@invamount (Rough Oridecon) > 4) as loop
@@ -96,6 +94,7 @@ macro refineOri {
 }
 
 macro refineElu {
+    set macro_delay 0.7
     $elu =  @invamount (Rough Elunium) R. Elus
     log Refining $elu
     while (@invamount (Rough Elunium) > 4) as loop
@@ -103,4 +102,10 @@ macro refineElu {
         call refineElu
     end loop
     stop
+}
+
+macro endOreRefine {
+    do conf sellAuto 1
+    do conf storageAuto 1
+    do conf lockMap @config(oreRefine_saveMap)
 }

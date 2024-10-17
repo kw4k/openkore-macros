@@ -10,7 +10,10 @@
 # Note: This is case sensitive. 
 #
 # Silver and Fire arrows can be bought on NPC so I
-# excluded them in storage checks
+# excluded them in storage 
+#
+# TODO:
+#   - add looping logic that will loop the arrow types
 #
 #---------- Quiver NPC Responses ----------#
 #0  Arrow Quiver
@@ -47,17 +50,18 @@ automacro makeQuiverCheckConfig {
 
 macro makeQuiverStorageChecks {
     $arrowType = @config(makeQuiver_arrow)
+    $arrow = arrowList("$arrowType", "arrow")
     $makeArrowQuiver = arrowList("$arrowType", "quiver")
     $makeArrowQuiverAmount = @config(makeQuiver_maxAmount)
     $storageSequence = @config(makeQuiver_storage)
     $quiverSequence = arrowList("$arrowType", "sequence")
     log Checking storage 
-    do move prontera @eval(155 + @rand(0,3)) @eval(170 + @rand(0,3))
-    pause 2
+    do move prontera @eval(155 + @rand(-3,3)) @eval(175 + @rand(-3,3))
+    pause 1
     do talknpc $storageSequence
     pause 1
     do storage close
-    if (@storamount($makeArrowQuiver) <= $makeArrowQuiverAmount) call makeQuiver
+    if (@storamount($makeArrowQuiver) < $makeArrowQuiverAmount) call makeQuiver
     stop
 }
 
@@ -65,8 +69,20 @@ macro makeQuiver {
     log Arrow Type is $arrowType
     $maxCanCarry = @eval((0.9 * $.maxweight) - $.weight)
     $buyAmount = @eval(int(($maxCanCarry/0.2)/500) * 500)
-    if (($arrowType != "Fire") && ($arrowType != "Silver")) {
+    if ($buyAmount > 30000) {
+        $buyAmount = 30000
+    }
+    # macro will not be checking for iron, fire and silver arrows in storage. just directly buy from NPC
+    if (($arrowType != "Fire") && ($arrowType != "Silver") && ($arrowType != "Iron")) {
         # get arrows from storage
+        do move prontera @eval(155 + @rand(0,3)) @eval(170 + @rand(0,3))
+        do talknpc @config(makeQuiver_storage)
+        pause 1
+        do storage get $arrow $buyAmount
+        do storage close
+        do move payon_in01 5 134
+        do talknpc 5 134 $quiverSequence
+        do autostorage
     } else {
         # buy arrows from npc
         if ($arrowType == "Silver") {
@@ -76,6 +92,12 @@ macro makeQuiver {
             do autostorage
         } elsif ($arrowType == "Fire") {
             do talknpc 147 175 b b3,$buyAmount
+            do move payon_in01 5 134
+            do talknpc 5 134 $quiverSequence
+            do autostorage
+        } elsif ($arrowType == "Iron") {
+            do move gonryun 147 84
+            do talknpc 147 84 b b1,$buyAmount
             do move payon_in01 5 134
             do talknpc 5 134 $quiverSequence
             do autostorage
@@ -97,7 +119,7 @@ sub arrowList {
         { arrowType => "Wind", arrow => "Arrow of Wind", quiver => "Wind Arrow Quiver", sequence => "c r6 c r0 c r0 n" },
         { arrowType => "Stone", arrow => "Stone Arrow", quiver => "Stone Arrow Quiver", sequence => "c r7 c r0 c r0 n" },
         { arrowType => "Crystal", arrow => "Crystal Arrow", quiver => "Crystal Arrow Quiver", sequence => "c r8 c r0 c r0 n" },
-        { arrowType => "Shadow", arrow => "Shadow Arrow", quiver => "Shadow Arrow Quiver", sequence => "c r9 c r0 c r0 n" },
+        { arrowType => "Shadow", arrow => "Arrow of Shadow", quiver => "Shadow Arrow Quiver", sequence => "c r9 c r0 c r0 n" },
         { arrowType => "Immaterial", arrow => "Immaterial Arrow", quiver => "Immaterial Arrow Quiver", sequence => "c r10 c r0 c r0 n" },
         { arrowType => "Rusty", arrow => "Rusty Arrow", quiver => "Rusty Arrow Quiver", sequence => "c r11 c r0 c r0 n" }
     );
@@ -108,4 +130,5 @@ sub arrowList {
         }
     }
 }
+
 #---------- Quiver Maker by Isora ----------#

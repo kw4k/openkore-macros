@@ -1,0 +1,111 @@
+#---------- Quiver Maker by Isora ----------#
+# DESCRIPTION: Macro will make <ArrowType> Quivers
+# until you have <Amount> of it in storage.
+# Just add a 'case' for each arrow type you want 
+# and change the talk response for each.
+#
+# USAGE: macro makeQuiver -- <ArrowType> <Amount>
+#
+# EXAMPLE: macro makeQuiver -- Silver 1000
+# Note: This is case sensitive. 
+#
+# Silver and Fire arrows can be bought on NPC so I
+# excluded them in storage checks
+#
+#---------- Quiver NPC Responses ----------#
+#0  Arrow Quiver
+#1  Iron Arrow Quiver
+#2  Steel Arrow Quiver
+#3  Oridecon Arrow Quiver
+#4  Fire Arrow Quiver
+#5  Silver Arrow Quiver
+#6  Wind Arrow Quiver
+#7  Stone Arrow Quiver
+#8  Crystal Arrow Quiver
+#9  Shadow Arrow Quiver
+#10 Immaterial Arrow Quiver
+#11 Rusty Arrow Quiver
+#---------- config checks ----------#
+# makeQuiver 1
+# makeQuiver_arrow
+# makeQuiver_maxAmount
+# makeQuiver_storage 147 171 r0 n
+
+automacro makeQuiverCheckConfig {
+    exclusive 1
+    run-once 1
+    call {
+        if (@config(makeQuiver) == 1) {
+            log ========== makeQuiver Macro Start! ==========
+            do conf lockMap None
+            do conf storageAuto 0
+            do conf sellAuto 0
+            call makeQuiverStorageChecks -exclusive
+        }
+    }
+}
+
+macro makeQuiverStorageChecks {
+    $arrowType = @config(makeQuiver_arrow)
+    $makeArrowQuiver = arrowList("$arrowType", "quiver")
+    $makeArrowQuiverAmount = @config(makeQuiver_maxAmount)
+    $storageSequence = @config(makeQuiver_storage)
+    $quiverSequence = arrowList("$arrowType", "sequence")
+    log Checking storage 
+    do move prontera @eval(155 + @rand(0,3)) @eval(170 + @rand(0,3))
+    pause 2
+    do talknpc $storageSequence
+    pause 1
+    do storage close
+    if (@storamount($makeArrowQuiver) <= $makeArrowQuiverAmount) call makeQuiver
+    stop
+}
+
+macro makeQuiver {
+    log Arrow Type is $arrowType
+    $maxCanCarry = @eval((0.9 * $.maxweight) - $.weight)
+    $buyAmount = @eval(int(($maxCanCarry/0.2)/500) * 500)
+    if (($arrowType != "Fire") && ($arrowType != "Silver")) {
+        # get arrows from storage
+    } else {
+        # buy arrows from npc
+        if ($arrowType == "Silver") {
+            do talknpc 147 175 b b2,$buyAmount
+            do move payon_in01 5 134
+            do talknpc 5 134 $quiverSequence
+            do autostorage
+        } elsif ($arrowType == "Fire") {
+            do talknpc 147 175 b b3,$buyAmount
+            do move payon_in01 5 134
+            do talknpc 5 134 $quiverSequence
+            do autostorage
+        }
+    }
+    call makeQuiverStorageChecks -exclusive
+}
+
+
+sub arrowList {
+    my ($getArrow, $args) = @_;
+    my @quiverMakeList = (
+        { arrowType => "Arrow", arrow => "Arrow", quiver => "Arrow Quiver", sequence => "c r0 c r0 c r0 n" },
+        { arrowType => "Iron", arrow => "Iron Arrow", quiver => "Iron Arrow Quiver", sequence => "c r1 c r0 c r0 n" },
+        { arrowType => "Steel", arrow => "Steel Arrow", quiver => "Steel Arrow Quiver", sequence => "c r2 c r0 c r0 n" },
+        { arrowType => "Oridecon", arrow => "Oridecon Arrow", quiver => "Oridecon Arrow Quiver", sequence => "c r3 c r0 c r0 n" },
+        { arrowType => "Fire", arrow => "Fire Arrow", quiver => "Fire Arrow Quiver", sequence => "c r4 c r0 c r0 n" },
+        { arrowType => "Silver", arrow => "Silver Arrow", quiver => "Silver Arrow Quiver", sequence => "c r5 c r0 c r0 n" },
+        { arrowType => "Wind", arrow => "Arrow of Wind", quiver => "Wind Arrow Quiver", sequence => "c r6 c r0 c r0 n" },
+        { arrowType => "Stone", arrow => "Stone Arrow", quiver => "Stone Arrow Quiver", sequence => "c r7 c r0 c r0 n" },
+        { arrowType => "Crystal", arrow => "Crystal Arrow", quiver => "Crystal Arrow Quiver", sequence => "c r8 c r0 c r0 n" },
+        { arrowType => "Shadow", arrow => "Shadow Arrow", quiver => "Shadow Arrow Quiver", sequence => "c r9 c r0 c r0 n" },
+        { arrowType => "Immaterial", arrow => "Immaterial Arrow", quiver => "Immaterial Arrow Quiver", sequence => "c r10 c r0 c r0 n" },
+        { arrowType => "Rusty", arrow => "Rusty Arrow", quiver => "Rusty Arrow Quiver", sequence => "c r11 c r0 c r0 n" }
+    );
+
+    foreach my $arrow (@quiverMakeList) {
+        if ($arrow->{arrowType} eq $getArrow) {
+            return $arrow->{$args};
+        }
+    }
+}
+#---------- Quiver Maker by Isora ----------#

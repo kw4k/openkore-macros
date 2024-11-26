@@ -13,6 +13,7 @@
 #   2. Add this oreRefine block to your config file
 #       oreRefine <boolean>
 #       oreRefine_storage <npc coordinates and talk sequence>
+#       oreRefine_saveMap <lockMap map name>
 #
 # EXAMPLE:
 #       oreRefine 1

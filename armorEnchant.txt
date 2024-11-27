@@ -1,0 +1,179 @@
+# armorEnchant - Armor Enchant macro by Isora
+# Github: https://github.com/kw4k/openkore-macros
+# RateMyServer: https://ratemyserver.net/armor_enchant.php
+#
+#	DESCRIPTION:
+#		Macro for Armor Enchanting
+#
+#	USAGE:
+#		macro armorEnchant -- "ArmorName"
+#
+#	EXAMPLE:
+#		macro armorEnchant -- "Silk Robe [1]"
+#
+#	IMPORTANT:
+#		- Requires characters with cart to use as temporary storage for enchanted armors
+#		- Armor names are CASE SENSITIVE.
+#		- Since kore doesn't read enchant stats by default, it's important to only to have
+#			one (1) armor in your inventory at a time. The macro does it. But before starting the
+#			macro, make sure you don't have anything in your inventory.
+#		- Don't forget to copy the following config blocks inside your config.txt
+#
+#	armorEnchant `config.txt` block
+#		Copy the config block below inside config.txt. Just leave it as is. The macro will automatically
+#		update it.
+#
+#		aE_saveStorage_npc
+#		aE_saveStorage_standpoint
+#		aE_saveStorage_NPC_type
+#		aE_saveStorage_NPC_steps
+#		aE_saveStorage_type
+#
+
+macro armorEnchant {
+	$coords = 146 89
+	$kafra = prontera 146 89
+	$kafraSteps = c r1 n
+	$kafraNPCType = 1
+	$kafraType = 0
+	$enchantNPC = 165 60
+	$equip = $.param1
+	log ========== armorEnchant Macro Start! ==========
+	$kafraCheck = @config(storageAuto_npc)
+	if ($kafraCheck != "prontera 146 89") {
+		# reconfiguring storage setup
+		# save original settings
+		log Reconfiguring storage setup...
+		do conf aE_saveStorage_npc @config(storageAuto_npc)
+		do conf aE_saveStorage_standpoint @config(storageAuto_standpoint)
+		do conf aE_saveStorage_NPC_type @config(storageAuto_npc_type)
+		do conf aE_saveStorage_NPC_steps @config(storageAuto_npc_steps)
+		do conf aE_saveStorage_type @config(storageAuto_type)
+		do conf autoTalkCont 1
+		# configure new storage settings
+		do conf storageAuto_npc $kafra
+		do conf storageAuto_standpoint $kafra
+		do conf storageAuto_npc_type $kafraNPCType
+		do conf storageAuto_npc_steps $kafraSteps
+		do conf storageAuto_type $kafraType
+		pause 1
+	}
+	# check storage for item
+	log Checking storage for $equip
+	do move prontera @eval(146 + @rand(-5,5)) @eval(89 + @rand(-5,5))
+	do talknpc $coords $kafraSteps
+	pause 1
+	if (@storage($equip) > 0) {
+		log You have @storamount($equip) $equip
+		pause 1
+		do storage get $equip
+		do storage close
+		pause 1
+		
+	} else {
+		# end macro. revert storage settings before stopping
+		log No $equip found!
+		call endArmorEnchant
+	}
+	# zeny check
+	if ($.zeny < 400000) {
+		log Not enough zeny!
+		call endArmorEnchant
+	}
+	# move to enchant npc
+	do move prontera @eval(165 + @rand(-3,3)) @eval(60 + @rand(-3,3))
+	$enchantSequence = armorEnchantList("$equip", "seq")
+	do talknpc $enchantNPC $enchantSequence
+	pause 8
+	# add the armor to cart after successful attempt
+	if (@inventory ($equip) != -1) {
+		do cart add @inventory($equip)
+	}
+	# repeat process if there're more armors
+	if (@storamount($equip) > 0) {
+		call armorEnchant -- "$equip"
+	}
+	# end macro. revert storage settings before stopping
+	call endArmorEnchant
+}
+
+macro endArmorEnchant {
+	# revert storage settings
+	log Reverting storage settings...
+	do conf storageAuto_npc @config(aE_saveStorage_npc)
+	do conf storageAuto_standpoint @config(aE_saveStorage_standpoint)
+	do conf storageAuto_npc_type @config(aE_saveStorage_NPC_type)
+	do conf storageAuto_npc_steps @config(aE_saveStorage_NPC_steps)
+	do conf storageAuto_type @config(aE_saveStorage_type)
+	pause 1
+}
+
+
+sub armorEnchantList {
+	my ($armor_type, $args) = @_;
+	my @armorList = (
+		{name => "Mantle", type => 0, seq => "r0 r0 r1 n"},
+		{name => "Coat", type => 0, seq => "r0 r1 r1 n"},
+		{name => "Chain Mail", type => 0, seq => "r0 r2 r1 n"},
+		{name => "Full Plate", type => 0, seq => "r0 r3 r1 n"},
+		{name => "Silk Robe", type => 0, seq => "r0 r4 r1 n"},
+		{name => "Saint's Robe", type => 0, seq => "r0 r5 r1 n"},
+		{name => "Holy Robe", type => 0, seq => "r0 r6 r1 n"},
+		{name => "Wooden Mail", type => 0, seq => "r0 r7 r1 n"},
+		{name => "Tights", type => 0, seq => "r0 r8 r1 n"},
+		{name => "Silver Robe", type => 0, seq => "r0 r9 r1 n"},
+		{name => "Mage Coat", type => 0, seq => "r0 r10 r1 n"},
+		{name => "Thief Clothes", type => 0, seq => "r0 r11 r1 n"},
+		{name => "Legion Plate Armor", type => 0, seq => "r0 r12 r1 n"},
+		{name => "Lucius's Fierce Armor of Volcano", type => 0, seq => "r0 r13 r1 n"},
+		{name => "Saphien's Armor of Ocean", type => 0, seq => "r0 r14 r1 n"},
+		{name => "Aebecee's Raging Typhoon Armor", type => 0, seq => "r0 r15 r1 n"},
+		{name => "Claytos Cracking Earth Armor", type => 0, seq => "r0 r16 r1 n"},
+		{name => "Ninja Suit", type => 0, seq => "r0 r17 r1 n"},
+		{name => "Chameleon Armor", type => 0, seq => "r0 r18 r1 n"},
+		{name => "Glorious Suit", type => 0, seq => "r0 r19 r1 n"},
+		{name => "Glorious Popularized Suit", type => 0, seq => "r0 r20 r1 n"},
+		{name => "Glorious Mass-Production Suit", type => 0, seq => "r0 r21 r1 n"},
+		{name => "Mink Coat [1]", type => 1, seq => "r1 r0 r1 n"},
+		{name => "Lord's Clothes [1]", type => 1, seq => "r1 r1 r1 n"},
+		{name => "Glittering Jacket [1]", type => 1, seq => "r1 r2 r1 n"},
+		{name => "Formal Suit [1]", type => 1, seq => "r1 r3 r1 n"},
+		{name => "Mantle [1]", type => 1, seq => "r1 r4 r1 n"},
+		{name => "Coat [1]", type => 1, seq => "r1 r5 r1 n"},
+		{name => "Chain Mail [1]", type => 1, seq => "r1 r6 r1 n"},
+		{name => "Full Plate [1]", type => 1, seq => "r1 r7 r1 n"},
+		{name => "Silk Robe [1]", type => 1, seq => "r1 r8 r1 n"},
+		{name => "Scapulare [1]", type => 1, seq => "r1 r9 r1 n"},
+		{name => "Saint's Robe [1]", type => 1, seq => "r1 r10 r1 n"},
+		{name => "Tights [1]", type => 1, seq => "r1 r11 r1 n"},
+		{name => "Silver Robe [1]", type => 1, seq => "r1 r12 r1 n"},
+		{name => "Thief Clothes [1]", type => 1, seq => "r1 r13 r1 n"},
+		{name => "Legion Plate Armor [1]", type => 1, seq => "r1 r14 r1 n"},
+		{name => "Lucius's Fierce Armor of Volcano [1]", type => 1, seq => "r1 r15 r1 n"},
+		{name => "Saphien's Armor of Ocean [1]", type => 1, seq => "r1 r16 r1 n"},
+		{name => "Aebecee's Raging Typhoon Armor [1]", type => 1, seq => "r1 r17 r1 n"},
+		{name => "Claytos Cracking Earth Armor [1]", type => 1, seq => "r1 r18 r1 n"},
+		{name => "Meteo Plate Armor [1]", type => 2, seq => "r2 r0 r1 n"},
+		{name => "Orleans's Gown [1]", type => 2, seq => "r2 r1 r1 n"},
+		{name => "Life Link [1]", type => 2, seq => "r2 r2 r1 n"},
+		{name => "Diabolus Robe [1]", type => 2, seq => "r2 r3 r1 n"},
+		{name => "Diabolus Armor [1]", type => 2, seq => "r2 r4 r1 n"},
+		{name => "Assaulter Plate [1]", type => 2, seq => "r2 r5 r1 n"},
+		{name => "Elite Engineer Armor [1]", type => 2, seq => "r2 r6 r1 n"},
+		{name => "Assassin Robe [1]", type => 2, seq => "r2 r7 r1 n"},
+		{name => "Warlock's Battle Robe [1]", type => 2, seq => "r2 r8 r1 n"},
+		{name => "Medic's Robe [1]", type => 2, seq => "r2 r9 r1 n"},
+		{name => "Elite Archer Suit [1]", type => 2, seq => "r2 r10 r1 n"},
+		{name => "Elite Shooter Suit [1]", type => 2, seq => "r2 r11 r1 n"},
+		{name => "Sprint Mail [1]", type => 2, seq => "r2 r12 r1 n"},
+		{name => "Kandura [1]", type => 2, seq => "r2 r13 r1 n"},
+		{name => "Armor of Naga [1]", type => 2, seq => "r2 r14 r1 n"},
+		{name => "Improved Tights [1]", type => 2, seq => "r2 r15 r1 n"},
+	);
+
+	foreach my $armor (@armorList) {
+		if ($armor->{name} eq $armor_type) {
+			return $armor->{$args};
+		}
+	}
+}

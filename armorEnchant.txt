@@ -74,6 +74,7 @@ macro armorEnchant {
 		# end macro. revert storage settings before stopping
 		log No $equip found!
 		call endArmorEnchant
+		stop
 	}
 	# zeny check
 	if ($.zeny < 400000) {
@@ -95,6 +96,7 @@ macro armorEnchant {
 	}
 	# end macro. revert storage settings before stopping
 	call endArmorEnchant
+	stop
 }
 
 macro endArmorEnchant {
@@ -106,6 +108,7 @@ macro endArmorEnchant {
 	do conf storageAuto_npc_steps @config(aE_saveStorage_NPC_steps)
 	do conf storageAuto_type @config(aE_saveStorage_type)
 	pause 1
+	stop
 }
 
 

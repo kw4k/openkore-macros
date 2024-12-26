@@ -1,4 +1,5 @@
 # Simple Storage to Storage transfer macro by Isora/kw4k
+# https://github.com/kw4k/openkore-macros/blob/main/storageTransfer.txt
 # Transfers item from one storage to another
 # USAGE: macro storageTransfer -- "<EquipmentName - Case-sensitive.>" <OriginStorage - Kafra/Guild> <DestinationStorage - Kafra/Guild> <LoopFlag - 1 or just leave it empty.>
 #

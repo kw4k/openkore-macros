@@ -1,0 +1,60 @@
+# Simple Storage to Storage transfer macro by Isora/kw4k
+# Transfers item from one storage to another
+# USAGE: macro storageTransfer -- "<EquipmentName - Case-sensitive.>" <OriginStorage - Kafra/Guild> <DestinationStorage - Kafra/Guild> <LoopFlag - 1 or just leave it empty.>
+#
+# EXAMPLE: 
+#
+#   macro storageTransfer -- "Undershirt" Guild Kafra 1
+#
+#   macro storageTransfer -- "Orcish Axe" Kafra Guild 
+#
+
+macro storageTransfer {
+    $item = $.param1
+    $from = $.param2
+    $to = $.param3
+    $isLoop = $.param4
+    $iPos = prontera @eval(155 + @rand(0,3)) @eval(170 + @rand(0,3))
+    $guildNpc = 147 171 r0 n
+    $kafraNpc = 164 175 c r1 n
+    do move $iPos
+    log Transferring $item from $from to $to
+    switch ($from) {
+        case (== Guild) {
+            $fromNpc = $guildNpc
+            $toNpc = $kafraNpc
+        }
+        case (== Kafra) {
+            $fromNpc = $kafraNpc
+            $toNpc = $guildNpc
+        }
+    }
+    log Opening $from Storage
+    do talknpc $fromNpc
+    log Checking if $item exists
+    $isItemInStorage = @storage($item)
+    if ($isItemInStorage == -1) goto noItem
+    while (($isItemInStorage != -1) && ($.weight < @eval(0.9*$.maxweight))) as loop
+        do storage get $item
+        $isItemInStorage = @storage($item)
+    end loop
+    do storage close
+    pause 1
+    log Opening $to Storage
+    do talknpc $toNpc
+    $isIteminInventory = @inventory($item)
+    while ($isIteminInventory != -1) as loop2
+        do storage add $item
+        $isIteminInventory = @inventory($item)
+    end loop2
+    do storage close
+    if ($isLoop == 1) {
+        call storageTransfer -- "$item" $from $to $isLoop
+    }
+    log Item transfer finished. Ending macro.
+    stop
+    :noItem
+    log Missing item.
+    do storage close
+    stop
+}

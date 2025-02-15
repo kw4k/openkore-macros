@@ -1,0 +1,69 @@
+# getStorageItem macro by Isora/kw4k
+# takes item from storage then sells or transfers it (todo)
+# USAGE: macro getStorageItem -- "ItemHere" "Kafra/Guild" mode
+# EXAMPLE: macro getStorageItem -- "Elemental Origin [2]" "Kafra" sell
+# It takes the item Elemental Origin [2] from Kafra storage then sells it.
+# NOTE: It takes all the items in storage up to 90% of the characters max weight.
+
+macro getStorageItem {
+    $storageGet = $.param1
+    $storage = $.param2
+    $mode = $.param3
+    $guildNpc = 147 171 r0 n
+    $kafraNpc = 164 175 c r1 n
+    switch ($storage) {
+        case (== Guild) {
+            $storageNpc = $guildNpc
+        }
+        case (== Kafra) {
+            $storageNpc = $kafraNpc
+        }
+    }
+    log Checking storage
+    do move prontera 155 175
+    do talknpc $storageNpc
+    log Checking for $storageGet
+    if (@storamount($storageGet) > 0) {
+        call itemGet -- "$storageGet"
+    }
+    do storage close
+    log Done..
+    # modes: to do lol.
+    switch($mode) {
+        case (== sell) {
+            log MODE: SELL
+            do talknpc 147 175 s
+            if (@invamount($storageGet) > 0) {
+                call sellItem -- "$storageGet"
+            log Sell done!
+            }
+        }
+    }
+    stop
+}
+
+macro sellItem {
+    $itemToSell = $.param1
+    $itemCount = @invamount($itemToSell)
+    $itemIndex = @Inventory($itemToSell)
+    $i = 1
+    set macro_delay 0.7
+    log Adding sell item $itemToSell
+    while ((@invamount($itemToSell) > 0) && ($i <= $itemCount)) as loop
+        do sell @arg("$itemIndex", $i)
+        $i++
+    end loop
+    do sell done
+    stop
+}
+
+macro itemGet {
+    $storageGetItem = $.param1
+    set macro_delay 0.8
+    log Taking $storageGetItem from storage..
+    while ((@storamount($storageGetItem) > 0) && ($.weight < @eval(0.9 * $.maxweight)) && (@invamount($storageGetItem) < 80)) as loop
+        do storage get $storageGetItem
+        call itemGet -- "$storageGetItem"
+    end loop
+    stop
+}

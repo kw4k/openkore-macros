@@ -1,14 +1,31 @@
 # getStorageItem macro by Isora/kw4k
 # takes item from storage then sells or transfers it (todo)
-# USAGE: macro getStorageItem -- "ItemHere" "Kafra/Guild" mode
-# EXAMPLE: macro getStorageItem -- "Elemental Origin [2]" "Kafra" sell
+# USAGE: macro getStorageItem -- "ItemHere" "Kafra/Guild" mode loopflag
+# EXAMPLE: macro getStorageItem -- "Elemental Origin [2]" "Kafra" selleq 1
 # It takes the item Elemental Origin [2] from Kafra storage then sells it.
 # NOTE: It takes all the items in storage up to 90% of the characters max weight.
+#
+# Item/Equipment name should be enclosed with double quotes (""). Case Sensitive.
+#
+# STORAGES:
+#   - Kafra: uses kafra storage
+#   - Guild: uses guild storage
+#   note: when using guild storage, make sure this character is the only one
+#       who's using it at that moment. this doesn't re-engage npcTalk
+#
+# MODES:
+#   - selleq: sell equipment types
+#   - sellneq: sell non-equipment types
+#
+# LOOP FLAG:
+#   - 1: loops macro until storage is empty of specified item
+#   note: if you don't want to loop, just leave it empty. 
 
 macro getStorageItem {
     $storageGet = $.param1
     $storage = $.param2
     $mode = $.param3
+    $isLoop = $.param4
     $guildNpc = 147 171 r0 n
     $kafraNpc = 164 175 c r1 n
     switch ($storage) {
@@ -30,14 +47,26 @@ macro getStorageItem {
     log Done..
     # modes: to do lol.
     switch($mode) {
-        case (== sell) {
-            log MODE: SELL
+        case (== selleq) {
+            log MODE: SELL EQUIPMENT TYPE
             do talknpc 147 175 s
             if (@invamount($storageGet) > 0) {
                 call sellItem -- "$storageGet"
             log Sell done!
             }
         }
+        
+        case (== sellneq) {
+            log MODE: SELL NON-EQUIPMENT TYPE
+            do talknpc 147 175 s
+            do sell @inventory($storageGet)
+            do sell done
+            log Sell done!
+        }
+    }
+    if ((@storamount($storageGet) > 0) && ($isLoop == 1)) {
+        log Looping getStorageItem macro!
+        call getStorageItem -- "$storageGet" $storage" $mode $isLoop
     }
     stop
 }
@@ -46,11 +75,11 @@ macro sellItem {
     $itemToSell = $.param1
     $itemCount = @invamount($itemToSell)
     $itemIndex = @Inventory($itemToSell)
-    $i = 1
+    $i = 0
     set macro_delay 0.7
     log Adding sell item $itemToSell
     while ((@invamount($itemToSell) > 0) && ($i <= $itemCount)) as loop
-        do sell @arg("$itemIndex", $i)
+        do sell @arg("$itemIndex", @eval($i + 1))
         $i++
     end loop
     do sell done

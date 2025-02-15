@@ -63,6 +63,12 @@ macro getStorageItem {
             do sell done
             log Sell done!
         }
+
+        case (== drop) {
+            log MODE: DROP ITEM
+            call throwTrash -- "$storageGet"
+
+        }
     }
     if ((@storamount($storageGet) > 0) && ($isLoop == 1)) {
         log Looping getStorageItem macro!
@@ -75,11 +81,11 @@ macro sellItem {
     $itemToSell = $.param1
     $itemCount = @invamount($itemToSell)
     $itemIndex = @Inventory($itemToSell)
-    $i = 0
+    $i = 1
     set macro_delay 0.7
     log Adding sell item $itemToSell
     while ((@invamount($itemToSell) > 0) && ($i <= $itemCount)) as loop
-        do sell @arg("$itemIndex", @eval($i + 1))
+        do sell @arg("$itemIndex", $i)
         $i++
     end loop
     do sell done
@@ -94,5 +100,16 @@ macro itemGet {
         do storage get $storageGetItem
         call itemGet -- "$storageGetItem"
     end loop
+    stop
+}
+
+macro throwTrash {
+    $trash = $.param1
+    set macro_delay 0.8
+    log Throwing $trash
+    while (@invamount($trash) > 0) as loop
+        do drop @inventory($trash)
+        call throwTrash -- "$trash"
+    end as loop
     stop
 }

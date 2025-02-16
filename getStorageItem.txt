@@ -72,7 +72,7 @@ macro getStorageItem {
     }
     if ((@storamount($storageGet) > 0) && ($isLoop == 1)) {
         log Looping getStorageItem macro!
-        call getStorageItem -- "$storageGet" $storage" $mode $isLoop
+        call getStorageItem -- "$storageGet" "$storage" $mode $isLoop
     }
     stop
 }

@@ -26,7 +26,9 @@
 #   Weapon2 = For weapons that will be refined by Emveretarcon.
 #   Weapon3 = For Level 3 weapons that will be refined by Oridecon
 #   Weapon4 = For Level 4 weapons that will be refined by Oridecon
+#   WeaponE = For weapons that will be refined by Enriched Oridecon
 #   Armor = For armors that will be refined by Elunium
+#   Armor2 = For armors that will be refined by Enriched Elunium
 #
 # RefineAmount - up to 10. Never tried beyond 10.
 #
@@ -55,10 +57,11 @@ macro refineEquip {
     if ($refineAmount == None) {
         $refineAmount = $itemLimit
     }
-    if (@invamount($itemName) < $refineAmount) gotomissingRefineItem
+    if (@invamount($itemName) < $refineAmount) goto missingRefineItem
     log $equipName uses $itemName ($matID) and has refine limit of $itemLimit
     if (@inventory($itemName) == -1) goto endRefine
     log You have @invamount($equipName) in inventory. Starting to refine $equipName $refineAmount times.
+    do move prt_in 59 59
     do talknpc 63 60
     $refineThis = @eval(@inventory($equipName))
     do refineui select $refineThis
@@ -67,7 +70,6 @@ macro refineEquip {
         log Refine attempt @eval($counter + 1) of $refineAmount
         do refineui refine $refineThis $matID
         $counter++
-        pause 0.5
     end loop
     do refineui cancel
     if (@inventory($equipName) != -1) {
@@ -91,7 +93,9 @@ sub refineStone {
         {item => "Emveretarcon", type => "Weapon2", id => 1011, limit => 6},
         {item => "Oridecon", type => "Weapon3", id => 984, limit => 5},
         {item => "Oridecon", type => "Weapon4", id => 984, limit => 4},
+        {item => "Enriched Oridecon", type => "WeaponE", id => 7620, limit => 10},
         {item => "Elunium", type => "Armor", id => 985, limit => 4},
+        {item => "Enriched Elunium", type => "Armor2", id => 7619, limit => 10},
     );
 
     foreach my $stone (@refineStones) {

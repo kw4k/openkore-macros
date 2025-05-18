@@ -1,6 +1,6 @@
 # getStorageItem macro by Isora/kw4k
 # takes item from storage then sells or transfers it (todo)
-# USAGE: macro getStorageItem -- "ItemHere" "Kafra/Guild" mode loopflag
+# USAGE: macro getStorageItem -- "ItemHere" "Kafra/Guild" mode loopflag "player_name" item_weight
 # EXAMPLE: macro getStorageItem -- "Elemental Origin [2]" "Kafra" selleq 1
 # It takes the item Elemental Origin [2] from Kafra storage then sells it.
 # NOTE: It takes all the items in storage up to 90% of the characters max weight.
@@ -16,6 +16,9 @@
 # MODES:
 #   - selleq: sell equipment types
 #   - sellneq: sell non-equipment types
+#   - drop
+#   - mail
+#   - mailneq
 #
 # LOOP FLAG:
 #   - 1: loops macro until storage is empty of specified item
@@ -26,6 +29,8 @@ macro getStorageItem {
     $storage = $.param2
     $mode = $.param3
     $isLoop = $.param4
+    $mailTarget = $.param5
+    $mailItemWeight = $.param6
     $guildNpc = 147 171 r0 n
     $kafraNpc = 164 175 c r1 n
     switch ($storage) {
@@ -67,13 +72,23 @@ macro getStorageItem {
         case (== drop) {
             log MODE: DROP ITEM
             call throwTrash -- "$storageGet"
+        }
 
+        case (== mail) {
+            log MODE: SENDING MAIL
+            call mailItem -- "$storageGet" "$mailTarget"
+        }
+
+        case (== mailneq) {
+            log MODE: SENDING MAIL
+            call mailItemNeq -- "$storageGet" "$mailTarget" $mailItemWeight
         }
     }
     if ((@storamount($storageGet) > 0) && ($isLoop == 1)) {
         log Looping getStorageItem macro!
         call getStorageItem -- "$storageGet" "$storage" $mode $isLoop
     }
+    log getStorageItem Macro END!
     stop
 }
 
@@ -111,5 +126,66 @@ macro throwTrash {
         do drop @inventory($trash)
         call throwTrash -- "$trash"
     end as loop
+    stop
+}
+
+
+macro mailItem {
+    $parcel = $.param1
+    $parcelCount = @invamount($parcel)
+    $parcelIndex = @Inventory($parcel)
+    $i = 1
+    $mailMax = 5
+    if ($parcelCount < $mailMax) {
+        $mailCount = $parcelCount
+    } else {
+        $mailCount = $mailMax
+    }
+    $sendTo = $.param2
+    log Sending $parcel to $sendTo
+    do rodex open
+    pause 1
+    do rodex write $sendTo
+    do rodex settitle $parcel - x $mailCount to $sendTo
+    do rodex settarget $sendTo
+    do rodex setbody Sending $parcel - x $mailCount to $sendTo
+    while ((@invamount($parcel) > 0) && ($i <= $mailCount)) as loop
+        do rodex add @arg("$parcelIndex", $i)
+        $i++
+    end loop
+    log adding x $mailCount $parcel to mail done! Sending it..
+    do rodex draft
+    do rodex send
+    do rodex close
+    if (@invamount($parcel) > 0) {
+        log Mailing more $parcel to $sendTo..
+        call mailItem -- "$parcel" "$sendTo"
+    }
+    stop
+}
+
+macro mailItemNeq {
+    $parcel = $.param1
+    $parcelCount = @invamount($parcel)
+    $parcelIndex = @Inventory($parcel)
+    $sendTo = $.param2
+    $itemWeight = $.param3
+    $mailCount = @eval(int(2000/$itemWeight))
+    log Sending $parcel to $sendTo
+    do rodex open
+    pause 1
+    do rodex write $sendTo
+    do rodex settitle $parcel - x $mailCount to $sendTo
+    do rodex settarget $sendTo
+    do rodex setbody Sending $parcel - x $mailCount to $sendTo
+    do rodex add $parcelIndex $mailCount
+    log adding x $mailCount $parcel to mail done! Sending it..
+    do rodex draft
+    do rodex send
+    do rodex close
+    if (@invamount($parcel) > 0) {
+        log Mailing more $parcel to $sendTo..
+        call mailItemNeq -- "$parcel" "$sendTo" $itemWeight
+    }
     stop
 }

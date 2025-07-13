@@ -38,13 +38,17 @@
 #			taking the right amount of ores
 #		- Add optional logging
 #
-# NOTE: This refiner macro is based on refineui refining.
+# NOTE: 
+#    This refiner macro is based on refineui refining.
 #   This won't work on the old style refining where you need to equip
 #   your item first before refining.
 #
 #	You can add -exclusive to make sure this macro is not interrupted by other
 #	macro calls.
 #
+# PS:
+#    Somehow, Enriched Elu/Ori can't be detected as upgrade material.
+#    Will fix sometime in the future.
 #---------------------------------------------------------------------#
 
 macro refineEquip {

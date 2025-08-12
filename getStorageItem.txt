@@ -86,6 +86,9 @@ macro getStorageItem {
     }
     if ((@storamount($storageGet) > 0) && ($isLoop == 1)) {
         log Looping getStorageItem macro!
+        pause 0.1
+        do c @go 0
+        pause 0.2
         call getStorageItem -- "$storageGet" "$storage" $mode $isLoop
     }
     log getStorageItem Macro END!
@@ -189,3 +192,4 @@ macro mailItemNeq {
     }
     stop
 }
+

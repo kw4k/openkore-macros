@@ -57,7 +57,7 @@ macro oreDowngradeStart {
         call sellOres -exclusive
     }
     if ((@storamount($output) < 29000) && (@storamount($item) > 0)) {
-        $canCarry = @eval(int(((0.5 * $.maxweight) - $.weight)/30))
+        $canCarry = @eval(int(((0.45 * $.maxweight) - $.weight)/30))
         do storage get $item $canCarry
         do storage close
         do move umbala 216 190
@@ -124,4 +124,5 @@ sub oreList {
             return $stone->{$args};
         }
     }
+
 }

@@ -1,0 +1,127 @@
+# Umbala Ore Downgrade Macro by Isora/kw4k
+# https://github.com/kw4k/openkore-macros
+#
+# Ore Downgrading Macro:
+# NOTES:
+# Add the oreDowngrade block to config.txt (remove #)
+# ---- ORE DOWNGRADE CONFIG BLOCK START ----
+# oreDowngrade 1
+# oreDowngrade_item Great Nature
+# oreDowngrade_standpoint 147 171 r0 n
+# oreDowngrade_saveMap
+# oreDowngrade_sellAuto
+# ---- ORE DOWNGRADE CONFIG BLOCK END ----
+#
+# USAGE: 
+#
+# oreDowngrade <1|0>
+# oreDowngrade_item <great nature, mystic frozen, flame heart, rough wind>, case-sensitive
+# oreDowngrade_standpoint <storage loc and sequence>
+# oreDowngrade_saveMap
+# oreDowngrade_sellAuto <1|0>
+#
+
+automacro oreDowngrade {
+    exclusive 1
+    run-once 1
+    call {
+        log ========= oreDowngrade Macro Start! =========
+        log Checking config file...
+        if (@config(oreDowngrade) == 1) {
+            log Confirmed. Starting macro!
+            do conf sellAuto 0
+            do conf storageAuto 0
+            do conf oreDowngrade_saveMap @config(lockMap)
+            do conf lockMap None
+            do conf teleportAuto_idle 0
+            do iconf Red Gemstone 1 0 0
+            do iconf Blue Gemstone 1 0 0
+            call oreDowngradeStart -exclusive
+        } else {
+            log Not ore downgrading today eh?
+        }
+    }    
+}
+
+macro oreDowngradeStart {
+    log Checking Storage..
+    do move prontera @eval(147 + @rand(-3,3)) @eval(171 + @rand(-3,3))
+    $storage = @config(oreDowngrade_standpoint)
+    $item = @config(oreDowngrade_item)
+    $output = oreList("$item", "output")
+    do iconf $output 0 1 0
+    do talknpc $storage
+    pause 0.5
+    if ((@storamount($output) >= 29000) && (@config(oreDowngrade_sellAuto) == 1)) {
+        do storage close
+        call sellOres -exclusive
+    }
+    if ((@storamount($output) < 29000) && (@storamount($item) > 0)) {
+        $canCarry = @eval(int(((0.5 * $.maxweight) - $.weight)/30))
+        do storage get $item $canCarry
+        do storage close
+        do move umbala 216 190
+        do talknpc 221 193 w2 r0 w2 r1 w2 r3 w2 n
+        call downgradeOres -exclusive
+    }
+    else {
+        log nothing to do...
+        call endOreDowngrade -exclusive
+    }
+}
+
+macro downgradeOres {
+    $sequence = oreList("$item", "sequence")
+    if ($.weight >= @eval(0.9 * $.maxweight)) end loop
+    while (@invamount($item) >= 10) as loop
+        do talknpc 44 71 w5 r1 w1 $sequence
+        call downgradeOres -exclusive
+    end loop
+    do autostorage
+    call oreDowngradeStart -exclusive
+    stop
+}
+
+macro sellOres {
+    while (@storamount($output) > 0) as loop
+        log Selling $output
+        do talknpc $storage
+        do storage get $output
+        do storage close
+        pause 0.5
+        do move 147 175
+        do talknpc 147 175 s
+        do sell @inventory($output)
+        do sell done
+        call sellOres -exclusive
+    end loop
+    call oreDowngradeStart -exclusive
+    stop
+}
+
+macro endOreDowngrade {
+    do conf sellAuto 1
+    do conf storageAuto 1
+    do conf lockMap @config(oreDowngrade_saveMap)
+    do conf teleportAuto_idle 1
+}
+
+macro testOre {
+    log $output $item $storage $output 
+}
+
+sub oreList {
+    my ($ore, $args) = @_;
+    my @oreDowngradeList = (
+        {item => "Great Nature", output => "Green Live", sequence => "r0 w1 d10 w1 d9 w5 n"},
+        {item => "Mystic Frozen", output => "Crystal Blue", sequence => "r1 w1 d10 w1 d9 w5 n"},
+        {item => "Flame Heart", output => "Red Blood", sequence => "r2 w1 d10 w1 d9 w5 n"},
+        {item => "Rough Wind", output => "Wind of Verdure", sequence => "r3 w1 d10 w1 d9 w5 n"}
+    );
+
+    foreach my $stone (@oreDowngradeList) {
+        if ($stone->{item} eq $ore) {
+            return $stone->{$args};
+        }
+    }
+}
